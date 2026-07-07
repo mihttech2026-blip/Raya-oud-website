@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>供应商面板 | 拉亚沉香</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .gold-btn { background-color: #C9A961; color: #1F1A17; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-[#1F1A17] text-[#F5F0E6]">
+
+    <!-- Header -->
+    <div class="border-b border-[#3C342F] bg-[#1F1A17]">
+        <div class="max-w-screen-2xl mx-auto px-8 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-x-3">
+                <div class="w-10 h-10 bg-[#C9A961] rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-truck-loading text-[#1F1A17]"></i>
+                </div>
+                <span class="font-bold text-2xl" id="header-title">供应商面板</span>
+            </div>
+
+            <!-- Language Switcher -->
+            <div class="flex items-center gap-x-2 bg-[#2C2522] rounded-2xl p-1 text-sm">
+                <button onclick="switchLanguage('zh')" class="px-3 py-1 rounded-xl" id="lang-zh">中文</button>
+                <button onclick="switchLanguage('en')" class="px-3 py-1 rounded-xl" id="lang-en">English</button>
+                <button onclick="switchLanguage('ar')" class="px-3 py-1 rounded-xl" id="lang-ar">العربية</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-8 py-10">
+
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold mb-2" id="page-title">欢迎，供应商</h1>
+            <p class="text-[#C9B8A8]" id="page-subtitle">请及时更新利雅得仓库的库存数量</p>
+        </div>
+
+        <!-- Update Stock -->
+        <div class="bg-[#2C2522] border border-[#3C342F] rounded-3xl p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6" id="update-title">更新库存</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm mb-2 text-[#C9B8A8]" id="label-product">选择产品</label>
+                    <select id="product-select" class="w-full bg-[#1F1A17] border border-[#3C342F] rounded-2xl px-4 py-3"></select>
+                </div>
+
+                <div>
+                    <label class="block text-sm mb-2 text-[#C9B8A8]" id="label-quantity">新数量</label>
+                    <input type="number" id="new-stock" class="w-full bg-[#1F1A17] border border-[#3C342F] rounded-2xl px-4 py-3" placeholder="请输入数量">
+                </div>
+            </div>
+
+            <button onclick="updateStock()" class="mt-6 w-full gold-btn py-4 rounded-3xl text-lg flex items-center justify-center gap-x-3">
+                <i class="fa-solid fa-sync-alt"></i>
+                <span id="update-btn">更新库存</span>
+            </button>
+        </div>
+
+        <!-- Current Stock Table -->
+        <div class="bg-[#2C2522] border border-[#3C342F] rounded-3xl p-8">
+            <h2 class="text-2xl font-bold mb-6" id="current-stock-title">当前利雅得库存</h2>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-[#3C342F] text-[#C9B8A8]">
+                        <th class="text-left py-4" id="th-product">产品</th>
+                        <th class="text-center py-4" id="th-quantity">数量</th>
+                        <th class="text-center py-4" id="th-update">最后更新</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Supabase Configuration ====================
+        const SUPABASE_URL = 'https://piynwtdqzpjqbhpedfmp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeW53dGRxenBqcWJocGVkZm1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzE4OTQ0NCwiZXhwIjoyMDk4NzY1NDQ0fQ.h_RrpXgDn4laMKGdNUgskNfM6eBmF5LvLl2POuJP9bM; // 
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentLang = 'zh';
+        let productsList = [];
+
+        // ==================== Language Support ====================
+        function switchLanguage(lang) {
+            currentLang = lang;
+            updateUI();
+        }
+
+        function updateUI() {
+            // يمكن توسيع الترجمات هنا
+            renderStockTable();
+            loadProductsIntoSelect();
+        }
+
+        // ==================== Load Products ====================
+        async function loadProducts() {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('is_active', true);
+
+            if (error) {
+                console.error('Error loading products:', error);
+                return;
+            }
+            productsList = data;
+            loadProductsIntoSelect();
+        }
+
+        function loadProductsIntoSelect() {
+            const select = document.getElementById('product-select');
+            select.innerHTML = '';
+
+            productsList.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+
+                if (currentLang === 'zh') option.textContent = product.name_zh || product.name_en;
+                else if (currentLang === 'en') option.textContent = product.name_en || product.name_ar;
+                else option.textContent = product.name_ar || product.name_en;
+
+                select.appendChild(option);
+            });
+        }
+
+        // ==================== Load Supplier Stock ====================
+        async function loadSupplierStock() {
+            const { data, error } = await supabase
+                .from('supplier_stock')
+                .select('*, products(*)');
+
+            if (error) {
+                console.error('Error loading supplier stock:', error);
+                return;
+            }
+
+            renderStockTable(data);
+        }
+
+        function renderStockTable(stockData = []) {
+            const tbody = document.getElementById('stock-table');
+            tbody.innerHTML = '';
+
+            if (stockData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-[#8B7F72]">暂无库存数据</td></tr>`;
+                return;
+            }
+
+            stockData.forEach(item => {
+                const product = item.products;
+                let name = '';
+
+                if (currentLang === 'zh') name = product.name_zh || product.name_en;
+                else if (currentLang === 'en') name = product.name_en || product.name_ar;
+                else name = product.name_ar || product.name_en;
+
+                const row = `
+                    <tr class="border-b border-[#3C342F]">
+                        <td class="py-4">${name}</td>
+                        <td class="py-4 text-center font-mono text-lg">${item.current_stock}</td>
+                        <td class="py-4 text-center text-xs">${new Date(item.last_updated).toLocaleDateString()}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // ==================== Update Stock ====================
+        async function updateStock() {
+            const productId = parseInt(document.getElementById('product-select').value);
+            const newStock = parseInt(document.getElementById('new-stock').value);
+
+            if (isNaN(newStock) || newStock < 0) {
+                alert(currentLang === 'zh' ? '请输入有效数量' : 'Please enter a valid quantity');
+                return;
+            }
+
+            const { error } = await supabase
+                .from('supplier_stock')
+                .upsert({
+                    product_id: productId,
+                    current_stock: newStock,
+                    last_updated: new Date().toISOString(),
+                    updated_by: 'supplier'
+                }, { onConflict: 'product_id' });
+
+            if (error) {
+                console.error('Error updating stock:', error);
+                alert('更新失败，请重试');
+                return;
+            }
+
+            alert(currentLang === 'zh' ? '库存更新成功' : 'Stock updated successfully');
+            document.getElementById('new-stock').value = '';
+            await loadSupplierStock();
+        }
+
+        // ==================== Initialization ====================
+        async function initialize() {
+            await loadProducts();
+            await loadSupplierStock();
+        }
+
+        window.onload = initialize;
+    </script>
+</body>
+</html>
