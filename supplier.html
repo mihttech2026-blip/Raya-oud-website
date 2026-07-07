@@ -6,7 +6,6 @@
     <title>供应商面板 | 拉亚沉香</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
@@ -80,11 +79,12 @@
     </div>
 
     <script>
-        // ==================== Supabase Configuration ====================
+        // ==================== Supabase Configuration (مصحح) ====================
         const SUPABASE_URL = 'https://piynwtdqzpjqbhpedfmp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeW53dGRxenBqcWJocGVkZm1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzE4OTQ0NCwiZXhwIjoyMDk4NzY1NDQ0fQ.h_RrpXgDn4laMKGdNUgskNfM6eBmF5LvLl2POuJP9bM';
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // استخدمنا اسم مختلف (sb) لتجنب التضارب
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentLang = 'zh';
         let productsList = [];
@@ -120,7 +120,7 @@
 
         // ==================== Load Products ====================
         async function loadProducts() {
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('products')
                 .select('*')
                 .eq('is_active', true);
@@ -151,7 +151,7 @@
 
         // ==================== Load Supplier Stock ====================
         async function loadSupplierStock() {
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('supplier_stock')
                 .select('*, products(*)');
 
@@ -200,7 +200,7 @@
                 return;
             }
 
-            const { error } = await supabase
+            const { error } = await sb
                 .from('supplier_stock')
                 .upsert({
                     product_id: productId,
