@@ -27,9 +27,9 @@
 
             <!-- Language Switcher -->
             <div class="flex items-center gap-x-2 bg-[#2C2522] rounded-2xl p-1 text-sm">
-                <button onclick="switchLanguage('zh')" class="px-3 py-1 rounded-xl" id="lang-zh">中文</button>
-                <button onclick="switchLanguage('en')" class="px-3 py-1 rounded-xl" id="lang-en">English</button>
-                <button onclick="switchLanguage('ar')" class="px-3 py-1 rounded-xl" id="lang-ar">العربية</button>
+                <button onclick="switchLanguage('zh')" class="px-3 py-1 rounded-xl">中文</button>
+                <button onclick="switchLanguage('en')" class="px-3 py-1 rounded-xl">English</button>
+                <button onclick="switchLanguage('ar')" class="px-3 py-1 rounded-xl">العربية</button>
             </div>
         </div>
     </div>
@@ -110,12 +110,9 @@
         }
 
         function updateUI() {
-            // تحديث كل النصوص الثابتة
             for (let id in translations) {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.textContent = translations[id][currentLang];
-                }
+                if (el) el.textContent = translations[id][currentLang];
             }
             loadProductsIntoSelect();
             loadSupplierStock();
@@ -232,4 +229,4 @@
         window.onload = initialize;
     </script>
 </body>
-</
+</html>
